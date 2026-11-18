@@ -1,4 +1,4 @@
 (executable
- (public_name loom)
+ (public_name vriom)
  (name main)
- (libraries loom bogue))
+ (libraries vriom bogue))

@@ -1,5 +1,5 @@
 {
-    description = "Loom text editor";
+    description = "Vriom text editor";
 
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -34,6 +34,8 @@
                 in
                 {
                     default = pkgs.mkShell {
+                        BOGUE_DIR = "${bogue}/share/bogue/themes";
+
                         packages = with pkgs; [
                             pkg-config
                             ocaml
