@@ -1,0 +1,32 @@
+# Nix & direnv
+.envrc
+.direnv/
+result
+result-*
+
+# OCaml & Dune
+_build/
+.merlin
+*.install
+*.byte
+*.native
+*.cmo
+*.cmi
+*.cmx
+*.cma
+*.cmxa
+*.cmxs
+*.o
+*.a
+*.annot
+*.cmt
+*.cmti
+
+# Env
+.env
+.env.local
+*~
+*.swp
+*.swo
+.DS_Store
+
