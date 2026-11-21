@@ -1,26 +1,12 @@
 (lang dune 3.23)
 
-(name loom)
-
-(generate_opam_files true)
+(name vriom)
 
 (source
- (github username/reponame))
-
-(authors "Author Name <author@example.com>")
-
-(maintainers "Maintainer Name <maintainer@example.com>")
-
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+ (github bat17v/vriom))
 
 (package
- (name loom)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml)
- (tags
-  ("add topics" "to describe" your project)))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
+ (name vriom)
+ (synopsis "Vriom text editor")
+ (description "A short synopsis")
+ (depends ocaml))
