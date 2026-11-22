@@ -1,2 +1,4 @@
 (library
- (name vriom))
+ (name vriom)
+ (modules :standard)
+ (libraries tsdl-ttf uuseg uutf str))

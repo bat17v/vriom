@@ -1,8 +1,11 @@
 open Bogue
 open Tsdl
 open Tsdl_ttf
+
 module W = Widget
 module L = Layout
+
+open Vriom
 
 let _ = Ttf.init ()
 
@@ -31,8 +34,12 @@ let create_widget () =
             let _ = (y := !y + (Ttf.font_line_skip font)) in
             ()
         in
-        let ls = [!buffer] in
-        let () = List.iter draw_text ls in
+        let draw_par par =
+            let () = List.iter draw_text par in
+            y := !y + 20
+        in
+        let ls = Text.split_to_pars font !buffer 320 in
+        let () = List.iter draw_par ls in
         ()
     in
     let area = W.get_sdl_area area_widget in
@@ -42,9 +49,21 @@ let create_widget () =
         Sdl_area.update area;
         W.update area_widget
     in
+    let on_hotkey _ _ ev = 
+        let keycode = Sdl.Event.(get ev keyboard_keycode) in
+        let keymod = Sdl.Event.(get ev keyboard_keymod) in
+        let () = print_endline ((string_of_int keycode) ^ " " ^ (string_of_int keymod)) in
+        if keycode = 13 then begin
+            buffer := !buffer ^ "\n";
+            Sdl_area.update area;
+            W.update area_widget
+        end else ()
+
+    in
     let () = Sdl_area.add area draw in
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
-    area_widget, [conn_input]
+    let conn_hotkeys = W.connect_main area_widget area_widget on_hotkey Trigger.[key_down] in
+    area_widget, [conn_input; conn_hotkeys]
 
 let () =
     let (widget, connects) = create_widget () in
