@@ -40,6 +40,11 @@ let create_widget () =
         in
         let ls = Text.split_to_pars font !buffer 320 in
         let () = List.iter draw_par ls in
+
+        let (x, y) = Text.get_cursor_geometry font ls (Text.grph_len !buffer) in
+        let rect = Sdl.Rect.create ~x:(20 + x) ~y:(20 + y) ~w:2 ~h:(Ttf.font_line_skip font) in
+        let _ = Sdl.set_render_draw_color renderer 0 0 255 255 in
+        let _ = Sdl.render_draw_rect renderer (Some rect) in
         ()
     in
     let area = W.get_sdl_area area_widget in
@@ -52,13 +57,22 @@ let create_widget () =
     let on_hotkey _ _ ev = 
         let keycode = Sdl.Event.(get ev keyboard_keycode) in
         let keymod = Sdl.Event.(get ev keyboard_keymod) in
-        let () = print_endline ((string_of_int keycode) ^ " " ^ (string_of_int keymod)) in
-        if keycode = 13 then begin
+        let () = print_endline ((string_of_int keymod) ^ " " ^ (string_of_int keycode)) in
+        match (keymod, keycode) with
+        | (4096, 13) ->
             buffer := !buffer ^ "\n";
             Sdl_area.update area;
             W.update area_widget
-        end else ()
-
+        | (4096, 8) ->
+            let grphs = Uuseg_string.fold_utf_8 `Grapheme_cluster (fun acc g -> g :: acc) [] !buffer in
+            let () = (
+            buffer := match grphs with
+            | [] | [ _ ] -> ""
+            | last :: rest -> String.concat "" (List.rev rest))
+            in
+            Sdl_area.update area;
+            W.update area_widget
+        | _ -> ()
     in
     let () = Sdl_area.add area draw in
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
