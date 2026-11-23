@@ -24,6 +24,18 @@ let split_to_pars (f: Ttf.font) (s: string) (w: int) =
     List.map (group_by_w []))
     |> List.map List.rev
 
+let insert_text (s: string) (i: int) (ins: string) =
+    let grphs = split_to `Grapheme_cluster s in
+    let prefix = List.take i grphs in
+    let suffix = List.drop i grphs in
+    String.concat "" (prefix @ [ins] @ suffix)
+
+let delete_symbols (s: string) (l: int) (r: int) =
+    let grphs = split_to `Grapheme_cluster s in
+    let prefix = List.take l grphs in
+    let suffix = List.drop r grphs  in
+    String.concat "" (prefix @ suffix)
+
 let grph_len (s: string) = List.length (split_to `Grapheme_cluster s)
 
 let get_cursor_geometry (f: Ttf.font) (pars: string list list) (i: int) =

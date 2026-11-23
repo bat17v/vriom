@@ -12,7 +12,8 @@ let _ = Ttf.init ()
 let font = Result.get_ok (Ttf.open_font (Option.get (Theme.get_font_path_opt "Ubuntu-R.ttf")) 20)
 
 let create_widget () =
-    let buffer = ref "!" in
+    let buffer = ref "" in
+    let cursor_pos = ref 0 in
     let area_widget = W.sdl_area ~w:400 ~h:200 () in
     let draw renderer =
         let () = Sdl.start_text_input () in
@@ -41,7 +42,7 @@ let create_widget () =
         let ls = Text.split_to_pars font !buffer 320 in
         let () = List.iter draw_par ls in
 
-        let (x, y) = Text.get_cursor_geometry font ls (Text.grph_len !buffer) in
+        let (x, y) = Text.get_cursor_geometry font ls !cursor_pos in
         let rect = Sdl.Rect.create ~x:(20 + x) ~y:(20 + y) ~w:2 ~h:(Ttf.font_line_skip font) in
         let _ = Sdl.set_render_draw_color renderer 0 0 255 255 in
         let _ = Sdl.render_draw_rect renderer (Some rect) in
@@ -50,29 +51,32 @@ let create_widget () =
     let area = W.get_sdl_area area_widget in
     let on_text_input _ _ ev =
         let text = Sdl.Event.(get ev text_input_text) in
-        buffer := !buffer ^ text;
+        buffer := Text.insert_text !buffer !cursor_pos text;
+        cursor_pos := !cursor_pos + 1;
         Sdl_area.update area;
         W.update area_widget
     in
     let on_hotkey _ _ ev = 
         let keycode = Sdl.Event.(get ev keyboard_keycode) in
         let keymod = Sdl.Event.(get ev keyboard_keymod) in
-        let () = print_endline ((string_of_int keymod) ^ " " ^ (string_of_int keycode)) in
-        match (keymod, keycode) with
+        let () = print_endline ((string_of_int !cursor_pos)) in
+        begin match (keymod, keycode) with
         | (4096, 13) ->
-            buffer := !buffer ^ "\n";
-            Sdl_area.update area;
-            W.update area_widget
+            buffer := Text.insert_text !buffer !cursor_pos "\n";
+            cursor_pos := !cursor_pos + 1;
         | (4096, 8) ->
-            let grphs = Uuseg_string.fold_utf_8 `Grapheme_cluster (fun acc g -> g :: acc) [] !buffer in
-            let () = (
-            buffer := match grphs with
-            | [] | [ _ ] -> ""
-            | last :: rest -> String.concat "" (List.rev rest))
-            in
-            Sdl_area.update area;
-            W.update area_widget
+            if !cursor_pos > 0 then begin
+            buffer := Text.delete_symbols !buffer (!cursor_pos - 1) !cursor_pos;
+            cursor_pos := !cursor_pos - 1;
+            end else ()
+        | (4096, 1073741904) ->
+            cursor_pos := (max 0 (!cursor_pos - 1));
+        | (4096, 1073741903) ->
+            cursor_pos := (min (Text.grph_len !buffer) (!cursor_pos + 1));
         | _ -> ()
+        end;
+        Sdl_area.update area;
+        W.update area_widget
     in
     let () = Sdl_area.add area draw in
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
