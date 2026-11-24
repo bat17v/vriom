@@ -11,6 +11,19 @@ let _ = Ttf.init ()
 
 let font = Result.get_ok (Ttf.open_font (Option.get (Theme.get_font_path_opt "Ubuntu-R.ttf")) 20)
 
+type message =
+    | Enter
+    | Backspace
+    | Right
+    | Left
+
+let hotkey_pad = Hotkeys.[
+    Hotkey.create Enter ~code:Sdl.K.return ();
+    Hotkey.create Backspace ~code:Sdl.K.backspace ();
+    Hotkey.create Right ~code:Sdl.K.right ();
+    Hotkey.create Left ~code:Sdl.K.left ();
+]
+
 let create_widget () =
     let buffer = ref "" in
     let cursor_pos = ref 0 in
@@ -56,35 +69,31 @@ let create_widget () =
         Sdl_area.update area;
         W.update area_widget
     in
-    let on_hotkey _ _ ev = 
-        let keycode = Sdl.Event.(get ev keyboard_keycode) in
-        let keymod = Sdl.Event.(get ev keyboard_keymod) in
-        let () = print_endline ((string_of_int !cursor_pos)) in
-        begin match (keymod, keycode) with
-        | (4096, 13) ->
+    let on_hotkey msg =
+        match msg with
+        | Enter ->
             buffer := Text.insert_text !buffer !cursor_pos "\n";
             cursor_pos := !cursor_pos + 1;
-        | (4096, 8) ->
+        | Backspace ->
             if !cursor_pos > 0 then begin
             buffer := Text.delete_symbols !buffer (!cursor_pos - 1) !cursor_pos;
             cursor_pos := !cursor_pos - 1;
             end else ()
-        | (4096, 1073741904) ->
+        | Left ->
             cursor_pos := (max 0 (!cursor_pos - 1));
-        | (4096, 1073741903) ->
+        | Right ->
             cursor_pos := (min (Text.grph_len !buffer) (!cursor_pos + 1));
-        | _ -> ()
-        end;
+        ;
         Sdl_area.update area;
         W.update area_widget
     in
     let () = Sdl_area.add area draw in
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
-    let conn_hotkeys = W.connect_main area_widget area_widget on_hotkey Trigger.[key_down] in
+    let conn_hotkeys = W.connect_main area_widget area_widget (Hotkeys.get_solver hotkey_pad on_hotkey) Trigger.[key_down] in
     area_widget, [conn_input; conn_hotkeys]
 
 let () =
     let (widget, connects) = create_widget () in
-    let layout = L.resident widget in
+    let layout = L.resident ~keyboard_focus:true widget in
     let board = Bogue.of_layout ~connections:connects layout in
     Bogue.run board
