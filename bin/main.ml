@@ -36,24 +36,9 @@ let create_widget () =
         let _ = Sdl.set_render_draw_color renderer 255 0 0 255 in
         let _ = Sdl.render_draw_rect renderer (Some rect) in
 
+        let ls = Text.split_to_pars font !buffer 360 in
         let color = Sdl.Color.create ~r:255 ~g:0 ~b:0 ~a:255 in
-        let y = ref 20 in
-        let draw_text text =
-            let surface = Result.get_ok (Ttf.render_utf8_blended font text color) in
-            let texture = Result.get_ok (Sdl.create_texture_from_surface renderer surface) in
-            let (w, h) = Sdl.get_surface_size surface in
-            
-            let rect = Sdl.Rect.create ~x:20 ~y:!y ~w ~h in
-            let _ = Sdl.render_copy ~dst:rect renderer texture in
-            let _ = (y := !y + (Ttf.font_line_skip font)) in
-            ()
-        in
-        let draw_par par =
-            let () = List.iter draw_text par in
-            y := !y + 20
-        in
-        let ls = Text.split_to_pars font !buffer 320 in
-        let () = List.iter draw_par ls in
+        let () = Text.draw_pars renderer font color ls 20 20 in
 
         let (x, y) = Text.get_cursor_geometry font ls !cursor_pos in
         let rect = Sdl.Rect.create ~x:(20 + x) ~y:(20 + y) ~w:2 ~h:(Ttf.font_line_skip font) in

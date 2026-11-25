@@ -44,6 +44,7 @@
                         ] ++ (with ocamlPackages; [
                             bogue
                             dune_3
+                            utop
                             findlib
                             ocaml-lsp
                             ocamlformat
