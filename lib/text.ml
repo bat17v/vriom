@@ -1,6 +1,8 @@
 open Tsdl
 open Tsdl_ttf
 
+open Protector
+
 let split_to (b: Uuseg.boundary) (s: string) =
     Uuseg_string.fold_utf_8 b (fun acc elem -> elem :: acc) [] s |> List.rev
 
@@ -71,16 +73,12 @@ let draw_pars (renderer: Sdl.renderer) (f: Ttf.font) (color: Sdl.color) (pars: s
     let func line ox oy _ () =
         if line = "" || line = "\n" then ()
         else
-        let surface = Result.get_ok (Ttf.render_utf8_blended f line color) in
-        let texture = Result.get_ok (Sdl.create_texture_from_surface renderer surface) in
+        let@$ surface = Result.get_ok (Ttf.render_utf8_blended f line color) in
+        let@! texture = Result.get_ok (Sdl.create_texture_from_surface renderer surface) in
         let (s_w, s_h) = Sdl.get_surface_size surface in
 
-        Sdl.free_surface surface;
-        
         let rect = Sdl.Rect.create ~x:ox ~y:oy ~w:s_w ~h:s_h in
-        let _ = Sdl.render_copy ~dst:rect renderer texture in
-
-        Sdl.destroy_texture texture
+        let _ = Sdl.render_copy ~dst:rect renderer texture in ()
     in
     fold_lines f func () ~offset_x ~offset_y pars
 
