@@ -28,6 +28,7 @@ let create_widget () =
     let buffer = ref "" in
     let cursor_pos = ref 0 in
     let area_widget = W.sdl_area ~w:400 ~h:200 () in
+
     let draw renderer =
         let () = Sdl.start_text_input () in
         let _ = Sdl.set_render_draw_color renderer 255 255 255 255 in 
@@ -38,7 +39,7 @@ let create_widget () =
 
         let ls = Text.split_to_pars font !buffer 360 in
         let color = Sdl.Color.create ~r:255 ~g:0 ~b:0 ~a:255 in
-        let () = Text.draw_pars renderer font color ls 20 20 in
+        let () = Text.draw_pars renderer font color 20 20 ls in
 
         let (x, y) = Text.get_cursor_geometry font ls !cursor_pos in
         let rect = Sdl.Rect.create ~x:(20 + x) ~y:(20 + y) ~w:2 ~h:(Ttf.font_line_skip font) in
@@ -46,7 +47,9 @@ let create_widget () =
         let _ = Sdl.render_draw_rect renderer (Some rect) in
         ()
     in
+
     let area = W.get_sdl_area area_widget in
+
     let on_text_input _ _ ev =
         let text = Sdl.Event.(get ev text_input_text) in
         buffer := Text.insert_text !buffer !cursor_pos text;
@@ -54,6 +57,7 @@ let create_widget () =
         Sdl_area.update area;
         W.update area_widget
     in
+
     let on_hotkey msg =
         match msg with
         | Enter ->
@@ -72,10 +76,28 @@ let create_widget () =
         Sdl_area.update area;
         W.update area_widget
     in
+
+    let on_mouse _ _ ev =
+        let (x, y) = Sdl_area.pointer_pos area ev in
+        let (mask, _) = Sdl.get_mouse_state () in
+        let pressed = Int32.logand Sdl.Button.lmask mask <> 0l in
+        let ls = Text.split_to_pars font !buffer 360 in
+        if pressed
+            then begin
+                Printf.printf "mouse: (%d, %d)\n%!" x y;
+                cursor_pos := Text.find_cursor_pos font ls (x - 20) (y - 20);
+                Sdl_area.update area;
+                W.update area_widget
+            end else ()
+    in
+
     let () = Sdl_area.add area draw in
+
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
     let conn_hotkeys = W.connect_main area_widget area_widget (Hotkeys.get_solver hotkey_pad on_hotkey) Trigger.[key_down] in
-    area_widget, [conn_input; conn_hotkeys]
+    let conn_mouse = W.connect_main area_widget area_widget on_mouse Trigger.(buttons_down) in
+
+    area_widget, [conn_input; conn_hotkeys; conn_mouse]
 
 let () =
     let (widget, connects) = create_widget () in
