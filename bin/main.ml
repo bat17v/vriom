@@ -84,7 +84,6 @@ let create_widget () =
         let ls = Text.split_to_pars font !buffer 360 in
         if pressed
             then begin
-                Printf.printf "mouse: (%d, %d)\n%!" x y;
                 cursor_pos := Text.find_cursor_pos font ls (x - 20) (y - 20);
                 Sdl_area.update area;
                 W.update area_widget
@@ -95,7 +94,7 @@ let create_widget () =
 
     let conn_input = W.connect_main area_widget area_widget on_text_input Trigger.[text_input] in
     let conn_hotkeys = W.connect_main area_widget area_widget (Hotkeys.get_solver hotkey_pad on_hotkey) Trigger.[key_down] in
-    let conn_mouse = W.connect_main area_widget area_widget on_mouse Trigger.(buttons_down) in
+    let conn_mouse = W.connect_main area_widget area_widget on_mouse Trigger.(buttons_down @ pointer_motion) in
 
     area_widget, [conn_input; conn_hotkeys; conn_mouse]
 
